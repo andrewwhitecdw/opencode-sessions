@@ -1,0 +1,20 @@
+name: TypeScript Type Check
+description: Verify TypeScript compiles without errors
+triggers:
+  - pull_request
+
+steps:
+  - name: Run typecheck
+    run: npm run typecheck
+    fail_on_error: true
+
+  - name: Review for type issues
+    prompt: |
+      Review the changed files for TypeScript type issues:
+
+      - Check for implicit `any` types that should be explicit
+      - Verify return types are consistent with function signatures
+      - Ensure type imports use `import type { X }` syntax
+      - Look for potential null/undefined issues
+
+      If issues found, leave a comment on the specific line.

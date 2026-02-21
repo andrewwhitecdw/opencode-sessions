@@ -1,0 +1,26 @@
+name: Code Style Review
+description: Enforce code style conventions from AGENTS.md
+triggers:
+  - pull_request
+
+steps:
+  - name: Check code style
+    prompt: |
+      Review the changed TypeScript files against these conventions from AGENTS.md:
+
+      **Imports:**
+      - Named imports preferred (not `import *`)
+      - Type imports must be separate: `import type { X }`
+
+      **Naming:**
+      - camelCase for variables and functions
+      - PascalCase for types, interfaces, classes, and exports
+
+      **Async:**
+      - Prefer async/await over raw promises
+
+      **Error Handling:**
+      - Try-catch blocks with proper cleanup
+      - No silent failures (empty catch blocks)
+
+      For each violation, leave a comment on the specific line explaining the issue and suggesting a fix.
