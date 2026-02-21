@@ -1,0 +1,21 @@
+name: Architecture Review
+description: Ensure changes align with single-file plugin architecture
+triggers:
+  - pull_request
+
+steps:
+  - name: Review architecture
+    prompt: |
+      Review the changes for architectural consistency:
+
+      **Project constraints:**
+      - Single-file plugin architecture (index.ts is the main entry)
+      - Event-driven hooks (tool.execute.before, event listeners)
+      - Plugin should remain lightweight
+
+      **Watch for:**
+      - Adding new files when the feature could fit in index.ts
+      - Introducing heavy dependencies
+      - Breaking the plugin's event-driven pattern
+
+      If changes violate these constraints, suggest alternatives that align with the architecture.

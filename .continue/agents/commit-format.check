@@ -1,0 +1,24 @@
+name: Commit Message Format
+description: Ensure commit messages follow Conventional Commits
+triggers:
+  - pull_request
+
+steps:
+  - name: Check commit messages
+    prompt: |
+      Review the commit messages in this PR for Conventional Commits format:
+
+      **Required format:** `type: description`
+
+      **Valid types:**
+      - `feat:` - New feature
+      - `fix:` - Bug fix
+      - `docs:` - Documentation changes
+      - `chore:` - Maintenance tasks
+      - `refactor:` - Code refactoring
+      - `test:` - Adding/modifying tests
+      - `perf:` - Performance improvements
+
+      **Breaking changes:** Use `!` suffix (e.g., `feat!: change API`)
+
+      If any commit message doesn't follow this format, leave a comment suggesting the correct format.
