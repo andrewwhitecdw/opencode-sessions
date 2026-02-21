@@ -528,18 +528,7 @@ EXAMPLES:
       session_list: tool({
         description: `List all OpenCode sessions with optional filtering.
 
-Returns a list of available sessions with metadata including title, message count, date range, and agents used.
-
-Arguments:
-- limit (optional): Maximum number of sessions to return
-- from_date (optional): Filter sessions from this date (ISO 8601 format)
-- to_date (optional): Filter sessions until this date (ISO 8601 format)
-
-Example output:
-| Session ID | Title | Messages | First | Last | Agents |
-|------------|-------|----------|-------|------|--------|
-| ses_abc123 | API Research | 45 | 2026-02-21 | 2026-02-21 | build, plan |
-| ses_def456 | Auth Implementation | 12 | 2026-02-20 | 2026-02-20 | build |`,
+Returns a table of sessions with ID, title, and creation date.`,
 
         args: {
           limit: tool.schema
@@ -594,11 +583,6 @@ Example output:
               return "No sessions found matching criteria."
             }
 
-            const header =
-              "| Session ID | Title | Created |"
-            const separator =
-              "|------------|-------|---------|"
-
             const rows = sessions.map((s) => {
               const id = s.id || "unknown"
               const title = s.title || "Untitled"
@@ -608,7 +592,7 @@ Example output:
               return `| ${id} | ${title} | ${created} |`
             })
 
-            return [header, separator, ...rows].join("\n")
+            return ["| Session ID | Title | Created |", "|------------|-------|---------|", ...rows].join("\n")
           } catch (error) {
             const message =
               error instanceof Error ? error.message : String(error)
