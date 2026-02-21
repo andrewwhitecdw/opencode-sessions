@@ -420,9 +420,12 @@ EXAMPLES:
                   },
                 })
 
-                return args.name
-                  ? `New session "${args.name}" created with ${args.agent || "build"} agent (ID: ${newSession.data.id})`
-                  : `New session created with ${args.agent || "build"} agent (ID: ${newSession.data.id})`
+                const sanitizeForPrompt = (str: string) => str.replace(/\n/g, " ")
+                const safeName = args.name ? sanitizeForPrompt(args.name) : null
+                const safeAgent = sanitizeForPrompt(args.agent || "build")
+                return safeName
+                  ? `New session "${safeName}" created with ${safeAgent} agent (ID: ${newSession.data.id})`
+                  : `New session created with ${safeAgent} agent (ID: ${newSession.data.id})`
 
               case "compact":
                 try {
@@ -503,9 +506,12 @@ EXAMPLES:
                   },
                 })
 
-                return args.name
-                  ? `Forked session "${args.name}" with ${args.agent || "build"} agent - history preserved (ID: ${forkedSession.data.id})`
-                  : `Forked session with ${args.agent || "build"} agent - history preserved (ID: ${forkedSession.data.id})`
+                const sanitizeFork = (str: string) => str.replace(/\n/g, " ")
+                const forkSafeName = args.name ? sanitizeFork(args.name) : null
+                const forkSafeAgent = sanitizeFork(args.agent || "build")
+                return forkSafeName
+                  ? `Forked session "${forkSafeName}" with ${forkSafeAgent} agent - history preserved (ID: ${forkedSession.data.id})`
+                  : `Forked session with ${forkSafeAgent} agent - history preserved (ID: ${forkedSession.data.id})`
             }
           } catch (error) {
             const message =
@@ -528,7 +534,7 @@ EXAMPLES:
       session_list: tool({
         description: `List all OpenCode sessions with optional filtering.
 
-Returns a list of available sessions with metadata including title, message count, date range, and agents used.
+Returns a list of available sessions with metadata including title and creation date.
 
 Arguments:
 - limit (optional): Maximum number of sessions to return
@@ -536,10 +542,10 @@ Arguments:
 - to_date (optional): Filter sessions until this date (ISO 8601 format)
 
 Example output:
-| Session ID | Title | Messages | First | Last | Agents |
-|------------|-------|----------|-------|------|--------|
-| ses_abc123 | API Research | 45 | 2026-02-21 | 2026-02-21 | build, plan |
-| ses_def456 | Auth Implementation | 12 | 2026-02-20 | 2026-02-20 | build |`,
+| Session ID | Title | Created |
+|------------|-------|---------|
+| ses_abc123 | API Research | 2026-02-21 |
+| ses_def456 | Auth Implementation | 2026-02-20 |`,
 
         args: {
           limit: tool.schema
@@ -577,12 +583,14 @@ Example output:
             }
 
             if (args.to_date) {
-              const toDate = new Date(args.to_date).getTime()
+              const toDate = new Date(args.to_date)
+              toDate.setUTCHours(23, 59, 59, 999)
+              const toTimestamp = toDate.getTime()
               sessions = sessions.filter((s) => {
                 const created = s.time?.created
                   ? new Date(s.time.created).getTime()
                   : 0
-                return created <= toDate
+                return created <= toTimestamp
               })
             }
 
@@ -600,8 +608,10 @@ Example output:
               "|------------|-------|---------|"
 
             const rows = sessions.map((s) => {
-              const id = s.id || "unknown"
-              const title = s.title || "Untitled"
+              const sanitizeForMarkdown = (str: string) =>
+                str.replace(/\|/g, "\\|").replace(/\n/g, " ")
+              const id = sanitizeForMarkdown(s.id || "unknown")
+              const title = sanitizeForMarkdown(s.title || "Untitled")
               const created = s.time?.created
                 ? new Date(s.time.created).toISOString().split("T")[0]
                 : "N/A"
