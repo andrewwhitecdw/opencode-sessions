@@ -321,6 +321,11 @@ ${agentList}
 
 If omitted, continues with current agent.
 
+NAME PARAMETER (optional):
+
+Custom name for new or forked sessions. Helps identify sessions in the session list.
+Only used in 'new' and 'fork' modes. Ignored in 'message' and 'compact' modes.
+
 EXAMPLES:
 
   # COLLABORATE: Multi-agent problem solving
@@ -331,13 +336,14 @@ EXAMPLES:
   })
   # Plan reviews, responds, can pass back to build
   
-  # HANDOFF: Clean phase transition
+  # HANDOFF: Clean phase transition with named session
   session({
     mode: "new",
     agent: "researcher", 
+    name: "API Research",
     text: "Research best practices for API design"
   })
-  # Fresh session, no baggage from previous implementation work
+  # Fresh session titled "API Research", no baggage from previous work
   
   # COMPRESS: Long conversation with handoff
   session({
@@ -347,18 +353,20 @@ EXAMPLES:
   })
   # Compacts history, adds handoff context, plan agent responds
   
-  # PARALLELIZE: Try multiple approaches
+  # PARALLELIZE: Named forked sessions for comparison
   session({
     mode: "fork",
-    agent: "build",
+    agent: "plan",
+    name: "Redux Architecture",
     text: "Implement using Redux"
   })
   session({
     mode: "fork", 
-    agent: "build",
+    agent: "plan",
+    name: "Context API Architecture",
     text: "Implement using Context API"
   })
-  # Two independent sessions, compare results
+  # Two named sessions for easy identification, compare results
 `,
 
         args: {
@@ -374,6 +382,12 @@ EXAMPLES:
             .describe(
               "Primary agent name (e.g., 'build', 'plan') for agent switching",
             ),
+          name: tool.schema
+            .string()
+            .optional()
+            .describe(
+              "Custom name for the session (used in 'new' and 'fork' modes)",
+            ),
         },
 
         async execute(args, toolCtx) {
@@ -388,11 +402,12 @@ EXAMPLES:
 
               case "new":
                 // Create session via SDK for agent control
+                const sessionTitle = args.name || (args.agent
+                  ? `Session via ${args.agent}`
+                  : "New session")
                 const newSession = await ctx.client.session.create({
                   body: {
-                    title: args.agent
-                      ? `Session via ${args.agent}`
-                      : "New session",
+                    title: sessionTitle,
                   },
                 })
 
@@ -405,7 +420,9 @@ EXAMPLES:
                   },
                 })
 
-                return `New session created with ${args.agent || "build"} agent (ID: ${newSession.data.id})`
+                return args.name
+                  ? `New session "${args.name}" created with ${args.agent || "build"} agent (ID: ${newSession.data.id})`
+                  : `New session created with ${args.agent || "build"} agent (ID: ${newSession.data.id})`
 
               case "compact":
                 try {
@@ -470,6 +487,13 @@ EXAMPLES:
                   body: {},
                 })
 
+                if (args.name) {
+                  await ctx.client.session.update({
+                    path: { id: forkedSession.data.id },
+                    body: { title: args.name },
+                  })
+                }
+
                 // Send new message in forked session
                 await ctx.client.session.prompt({
                   path: { id: forkedSession.data.id },
@@ -479,7 +503,9 @@ EXAMPLES:
                   },
                 })
 
-                return `Forked session with ${args.agent || "build"} agent - history preserved (ID: ${forkedSession.data.id})`
+                return args.name
+                  ? `Forked session "${args.name}" with ${args.agent || "build"} agent - history preserved (ID: ${forkedSession.data.id})`
+                  : `Forked session with ${args.agent || "build"} agent - history preserved (ID: ${forkedSession.data.id})`
             }
           } catch (error) {
             const message =
